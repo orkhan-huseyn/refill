@@ -1,4 +1,4 @@
-package limiter
+package storage
 
 import (
 	"time"
@@ -20,7 +20,7 @@ func NewBucket(capacity, rate float64) *Bucket {
 	}
 }
 
-func (b *Bucket) refill() {
+func (b *Bucket) Refill() {
 	now := time.Now()
 	elapsed := now.Sub(b.lastRefill).Seconds()
 
@@ -42,4 +42,16 @@ func (b *Bucket) ResetTime() time.Time {
 	missingTokens := b.capacity - b.tokens
 	secondsUntilFull := float64(missingTokens) / b.refillRate
 	return time.Now().Add(time.Duration(secondsUntilFull * float64(time.Second)))
+}
+
+func (b *Bucket) Consume(cost float64) {
+	b.tokens -= cost
+}
+
+func (b *Bucket) Capacity() float64 {
+	return b.capacity
+}
+
+func (b *Bucket) Remaining() float64 {
+	return b.tokens
 }

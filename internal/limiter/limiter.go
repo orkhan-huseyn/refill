@@ -3,60 +3,48 @@ package limiter
 import (
 	"sync"
 	"time"
+
+	"github.com/orkhan-huseyn/refill/internal/storage"
 )
 
 type Limiter struct {
 	mu      sync.RWMutex
-	storage map[string]*Bucket
+	storage storage.Storage
 }
 
 type Result struct {
 	Allowed    bool
-	Remaining  float64
-	Capacity   float64
+	Remaining  int
+	Capacity   int
 	Reset      time.Time
 	RetryAfter time.Duration
 }
 
 func NewLimiter() *Limiter {
 	return &Limiter{
-		storage: make(map[string]*Bucket),
+		storage: storage.NewInMemory(),
 	}
 }
 
 func (l *Limiter) Allow(key, namespace string, cost int) *Result {
-	b := l.getBucket(key, namespace)
-	b.refill()
+	b := l.storage.GetBucket(key, namespace)
+	b.Refill()
 
+	// TODO: maybe cleanup a bit?
 	res := &Result{}
-	res.Capacity = b.capacity
-	res.Remaining = b.tokens
+	res.Capacity = int(b.Capacity())
+	res.Remaining = int(b.Remaining())
 	res.RetryAfter = b.RetryAfter()
 	res.Reset = b.ResetTime()
 
 	// TODO: what is cost is zero?
-	if b.tokens >= 1.0 {
-		b.tokens -= float64(cost)
+	if float64(b.Remaining()) >= 1.0 {
+		b.Consume(float64(cost))
 		res.Allowed = true
-		res.Remaining = b.tokens
+		res.Remaining = int(b.Remaining())
 		return res
 	}
 
 	res.Allowed = false
 	return res
-}
-
-func (l *Limiter) getBucket(key, namespace string) *Bucket {
-	compositeKey := key + ":" + namespace
-
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
-	b, ok := l.storage[compositeKey]
-	if !ok {
-		b = NewBucket(5.0, 0.5)
-		l.storage[compositeKey] = b
-	}
-
-	return b
 }
