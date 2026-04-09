@@ -7,3 +7,9 @@ type RateLimitResponse struct {
 	Remaining int       `json:"remaining"`
 	ResetTime time.Time `json:"reset_time"`
 }
+
+type RateLimitRequest struct {
+	Key       string `json:"key"`
+	Cost      int    `json:"cost"`
+	Namespace string `json:"namespace"`
+}

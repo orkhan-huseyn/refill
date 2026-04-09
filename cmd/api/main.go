@@ -9,7 +9,7 @@ import (
 func main() {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("GET /api/v1/is-allowed", isAllowed)
+	mux.HandleFunc("POST /api/v1/is-allowed", isAllowed)
 
 	fmt.Println("Starting server on port :8080")
 	err := http.ListenAndServe(":8080", mux)

@@ -1,64 +1,62 @@
 package limiter
 
 import (
-	"math"
+	"sync"
 	"time"
 )
 
 type Limiter struct {
-	capacity   float64
-	tokens     float64
-	refillRate float64
-	lastRefill time.Time
+	mu      sync.RWMutex
+	storage map[string]*Bucket
 }
 
-func New(capacity, rate float64) *Limiter {
+type Result struct {
+	Allowed    bool
+	Remaining  float64
+	Capacity   float64
+	Reset      time.Time
+	RetryAfter time.Duration
+}
+
+func NewLimiter() *Limiter {
 	return &Limiter{
-		capacity:   capacity,
-		tokens:     capacity,
-		refillRate: rate,
-		lastRefill: time.Now(),
+		storage: make(map[string]*Bucket),
 	}
 }
 
-func (l *Limiter) Allow() bool {
-	l.refill()
+func (l *Limiter) Allow(key, namespace string, cost int) *Result {
+	b := l.getBucket(key, namespace)
+	b.refill()
 
-	if l.tokens >= 1.0 {
-		l.tokens--
-		return true
-	}
-	return false
-}
+	res := &Result{}
+	res.Capacity = b.capacity
+	res.Remaining = b.tokens
+	res.RetryAfter = b.RetryAfter()
+	res.Reset = b.ResetTime()
 
-func (l *Limiter) refill() {
-	now := time.Now()
-	elapsed := now.Sub(l.lastRefill).Seconds()
-
-	l.tokens = math.Min(l.capacity, l.tokens+(elapsed*l.refillRate))
-	l.lastRefill = now
-}
-
-func (l *Limiter) RetryAfter() time.Duration {
-	if l.tokens >= 1.0 {
-		return 0
+	// TODO: what is cost is zero?
+	if b.tokens >= 1.0 {
+		b.tokens -= float64(cost)
+		res.Allowed = true
+		res.Remaining = b.tokens
+		return res
 	}
 
-	needed := 1.0 - l.tokens
-	seconds := needed / l.refillRate
-	return time.Duration(seconds * float64(time.Second))
+	res.Allowed = false
+	return res
 }
 
-func (l *Limiter) ResetTime() time.Time {
-	missingTokens := l.capacity - l.tokens
-	secondsUntilFull := float64(missingTokens) / l.refillRate
-	return time.Now().Add(time.Duration(secondsUntilFull * float64(time.Second)))
-}
+func (l *Limiter) getBucket(key, namespace string) *Bucket {
+	compositeKey := key + ":" + namespace
 
-func (l *Limiter) Capacity() int {
-	return int(l.capacity)
-}
+	l.mu.Lock()
+	defer l.mu.Unlock()
 
-func (l *Limiter) Remaining() int {
-	return int(l.tokens)
+	b, ok := l.storage[compositeKey]
+	if !ok {
+		b = NewBucket(5.0, 0.5)
+		l.storage[compositeKey] = b
+	}
+
+	return b
 }
