@@ -24,6 +24,7 @@ func (s *InMemoryStorage) GetBucket(key, namespace string) *Bucket {
 
 	b, ok := s.cache[compositeKey]
 	if !ok {
+		// TODO: where to get those arguments? hardcoded doesn't look good
 		b = NewBucket(5.0, 0.5)
 		s.cache[compositeKey] = b
 	}

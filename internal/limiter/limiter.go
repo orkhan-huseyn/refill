@@ -1,14 +1,12 @@
 package limiter
 
 import (
-	"sync"
 	"time"
 
 	"github.com/orkhan-huseyn/refill/internal/storage"
 )
 
 type Limiter struct {
-	mu      sync.RWMutex
 	storage storage.Storage
 }
 

@@ -21,7 +21,6 @@ func isAllowed(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result := rateLimiter.Allow(req.Key, req.Namespace, req.Cost)
-
 	res := &dto.RateLimitResponse{
 		Allowed:   result.Allowed,
 		ResetTime: result.Reset,
@@ -29,8 +28,8 @@ func isAllowed(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("X-RateLimit-Limit", strconv.Itoa(int(result.Capacity)))
-	w.Header().Set("X-RateLimit-Remaining", strconv.Itoa(int(result.Remaining)))
+	w.Header().Set("X-RateLimit-Limit", strconv.Itoa(result.Capacity))
+	w.Header().Set("X-RateLimit-Remaining", strconv.Itoa(result.Remaining))
 	w.Header().Set("X-RateLimit-Reset", strconv.Itoa(int(result.Reset.UnixMilli())))
 	w.Header().Set("Retry-After", strconv.Itoa(int(result.RetryAfter.Seconds())))
 

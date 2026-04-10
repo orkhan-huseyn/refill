@@ -1,17 +1,42 @@
 package main
 
 import (
-	"fmt"
+	"context"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
 func main() {
-	mux := http.NewServeMux()
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
 
+	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/v1/is-allowed", isAllowed)
 
-	fmt.Println("Starting server on port :8080")
-	err := http.ListenAndServe(":8080", mux)
-	log.Fatal(err)
+	server := &http.Server{
+		Addr:    ":8080",
+		Handler: mux,
+	}
+
+	go func() {
+		log.Println("Starting server on port :8080")
+		if err := server.ListenAndServe(); err != http.ErrServerClosed {
+			log.Fatal(err)
+		}
+	}()
+
+	<-shutdown
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		log.Printf("Shutdown error: %v", err)
+	}
+
+	log.Println("Server stopped")
 }
