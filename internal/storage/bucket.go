@@ -43,15 +43,3 @@ func (b *Bucket) ResetTime() time.Time {
 	secondsUntilFull := missingTokens / b.refillRate
 	return time.Now().Add(time.Duration(secondsUntilFull * float64(time.Second)))
 }
-
-func (b *Bucket) Consume(cost float64) {
-	b.tokens -= cost
-}
-
-func (b *Bucket) Capacity() float64 {
-	return b.capacity
-}
-
-func (b *Bucket) Remaining() float64 {
-	return b.tokens
-}

@@ -1,33 +1,54 @@
 package storage
 
 import (
+	"context"
 	"sync"
 )
 
-type InMemoryStorage struct {
+type InMemoryStore struct {
 	mu    sync.RWMutex
 	cache map[string]*Bucket
 }
 
-func NewInMemory() *InMemoryStorage {
-	return &InMemoryStorage{
+func NewInMemory() *InMemoryStore {
+	return &InMemoryStore{
 		mu:    sync.RWMutex{},
 		cache: make(map[string]*Bucket),
 	}
 }
 
-func (s *InMemoryStorage) GetBucket(key, namespace string) *Bucket {
-	compositeKey := key + ":" + namespace
+func (s *InMemoryStore) Take(ctx context.Context, key string, amount int) (RateLimitResult, error) {
+	var res RateLimitResult
+	if err := ctx.Err(); err != nil {
+		return res, err
+	}
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	b, ok := s.cache[compositeKey]
+	bucket, ok := s.cache[key]
 	if !ok {
 		// TODO: where to get those arguments? hardcoded doesn't look good
-		b = NewBucket(5.0, 0.5)
-		s.cache[compositeKey] = b
+		bucket = NewBucket(5.0, 0.5)
+		s.cache[key] = bucket
 	}
 
-	return b
+	bucket.Refill()
+	res = RateLimitResult{
+		Limit:      int(bucket.capacity),
+		Remaining:  int(bucket.tokens),
+		RetryAfter: bucket.RetryAfter(),
+	}
+
+	// TODO: what if cost is zero?
+	if bucket.tokens >= float64(amount) {
+		bucket.tokens -= float64(amount)
+		res.Allowed = true
+		res.Remaining = int(bucket.tokens)
+	} else {
+		res.Remaining = int(bucket.tokens)
+		res.Allowed = false
+	}
+
+	return res, nil
 }
