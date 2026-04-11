@@ -37,7 +37,8 @@ func (s *InMemoryStore) Take(ctx context.Context, key string, amount int) (RateL
 	res = RateLimitResult{
 		Limit:      int(bucket.capacity),
 		Remaining:  int(bucket.tokens),
-		RetryAfter: bucket.RetryAfter(),
+		RetryAfter: bucket.RetryAfter(float64(amount)),
+		ResetTime:  bucket.ResetTime(),
 	}
 
 	// TODO: what if cost is zero?

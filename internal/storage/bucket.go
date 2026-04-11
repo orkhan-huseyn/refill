@@ -28,7 +28,7 @@ func (b *Bucket) Refill() {
 	b.lastRefill = now
 }
 
-func (b *Bucket) RetryAfter() time.Duration {
+func (b *Bucket) RetryAfter(amount float64) time.Duration {
 	if b.tokens >= 1.0 {
 		return 0
 	}
