@@ -2,18 +2,23 @@ package storage
 
 import (
 	"context"
+	"runtime"
 	"sync"
+
+	"github.com/orkhan-huseyn/refill/internal/shardedmap"
 )
 
 type InMemoryStore struct {
 	mu    sync.RWMutex
-	cache map[string]*Bucket
+	cache shardedmap.ShardedMap[*Bucket]
 }
 
 func NewInMemory() *InMemoryStore {
+	// TODO: container aware?
+	shardCount := runtime.NumCPU()
 	return &InMemoryStore{
 		mu:    sync.RWMutex{},
-		cache: make(map[string]*Bucket),
+		cache: shardedmap.New[*Bucket](shardCount),
 	}
 }
 
@@ -26,11 +31,11 @@ func (s *InMemoryStore) Take(ctx context.Context, key string, amount int) (RateL
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	bucket, ok := s.cache[key]
+	bucket, ok := s.cache.Get(key)
 	if !ok {
 		// TODO: where to get those arguments? hardcoded doesn't look good
 		bucket = NewBucket(5.0, 0.5)
-		s.cache[key] = bucket
+		s.cache.Put(key, bucket)
 	}
 
 	bucket.Refill()
