@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -23,6 +24,7 @@ func isAllowed(w http.ResponseWriter, r *http.Request) {
 	result, err := rateLimiter.Allow(r.Context(), req.Key, req.Namespace, req.Cost)
 	if err != nil {
 		// TODO: add generic error response struct
+		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

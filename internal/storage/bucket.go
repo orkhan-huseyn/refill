@@ -32,14 +32,11 @@ func (b *Bucket) RetryAfter(amount float64) time.Duration {
 	if b.tokens >= 1.0 {
 		return 0
 	}
-
-	needed := 1.0 - b.tokens
-	seconds := needed / b.refillRate
+	seconds := (1.0 - b.tokens) / b.refillRate
 	return time.Duration(seconds * float64(time.Second))
 }
 
 func (b *Bucket) ResetTime() time.Time {
-	missingTokens := b.capacity - b.tokens
-	secondsUntilFull := missingTokens / b.refillRate
+	secondsUntilFull := (b.capacity - b.tokens) / b.refillRate
 	return time.Now().Add(time.Duration(secondsUntilFull * float64(time.Second)))
 }

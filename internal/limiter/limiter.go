@@ -12,7 +12,7 @@ type Limiter struct {
 
 func NewLimiter() *Limiter {
 	return &Limiter{
-		storage: storage.NewInMemory(),
+		storage: storage.NewRedisStore("redis://default:my_password_here@localhost:6379/1"),
 	}
 }
 

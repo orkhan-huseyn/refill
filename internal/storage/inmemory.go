@@ -3,33 +3,27 @@ package storage
 import (
 	"context"
 	"runtime"
-	"sync"
 
 	"github.com/orkhan-huseyn/refill/internal/shardedmap"
 )
 
 type InMemoryStore struct {
-	mu    sync.RWMutex
 	cache shardedmap.ShardedMap[*Bucket]
 }
 
-func NewInMemory() *InMemoryStore {
+func NewInMemoryStore() InMemoryStore {
 	// TODO: container aware?
 	shardCount := runtime.NumCPU()
-	return &InMemoryStore{
-		mu:    sync.RWMutex{},
+	return InMemoryStore{
 		cache: shardedmap.New[*Bucket](shardCount),
 	}
 }
 
-func (s *InMemoryStore) Take(ctx context.Context, key string, amount int) (RateLimitResult, error) {
+func (s InMemoryStore) Take(ctx context.Context, key string, amount int) (RateLimitResult, error) {
 	var res RateLimitResult
 	if err := ctx.Err(); err != nil {
 		return res, err
 	}
-
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	bucket, ok := s.cache.Get(key)
 	if !ok {
