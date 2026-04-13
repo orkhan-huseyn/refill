@@ -2,15 +2,21 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 )
 
+var port = flag.Int("port", 50051, "The server port")
+
 func main() {
+	flag.Parse()
+
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
 
@@ -18,12 +24,12 @@ func main() {
 	mux.HandleFunc("POST /api/v1/is-allowed", isAllowed)
 
 	server := &http.Server{
-		Addr:    ":8080",
+		Addr:    ":" + strconv.Itoa(*port),
 		Handler: mux,
 	}
 
 	go func() {
-		log.Println("Starting server on port :8080")
+		log.Printf("Starting server on port :%d", *port)
 		if err := server.ListenAndServe(); err != http.ErrServerClosed {
 			log.Fatal(err)
 		}
