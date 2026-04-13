@@ -29,6 +29,7 @@ local key = KEYS[1]
 local max_tokens = tonumber(ARGV[1])
 local refill_rate = tonumber(ARGV[2])
 local now = tonumber(ARGV[3])
+local amount = tonumber(ARGV[4])
 
 local data = redis.call('HGETALL', key)
 local tokens = max_tokens
@@ -50,8 +51,8 @@ tokens = math.min(max_tokens, tokens + new_tokens)
 local allowed = 0
 local remaining = tokens
 
-if tokens >= 1 then
-  tokens = tokens - 1
+if tokens >= amount then
+  tokens = tokens - amount
   remaining = tokens
   allowed = 1
 end
@@ -84,7 +85,7 @@ func (s RedisStore) Take(ctx context.Context, key string, amount int) (RateLimit
 	maxTokens := 5.0
 	now := float64(time.Now().UnixNano() / 1e9)
 
-	val, err := s.client.Eval(ctx, luaScript, keys, maxTokens, refillRate, now).StringSlice()
+	val, err := s.client.Eval(ctx, luaScript, keys, maxTokens, refillRate, now, amount).StringSlice()
 	if err != nil {
 		return res, err
 	}
