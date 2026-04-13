@@ -19,7 +19,7 @@ func NewInMemoryStore() InMemoryStore {
 	}
 }
 
-func (s InMemoryStore) Take(ctx context.Context, key string, amount int) (RateLimitResult, error) {
+func (s InMemoryStore) Take(ctx context.Context, key string, amount int, limit float64, rate float64) (RateLimitResult, error) {
 	var res RateLimitResult
 	if err := ctx.Err(); err != nil {
 		return res, err
@@ -27,8 +27,7 @@ func (s InMemoryStore) Take(ctx context.Context, key string, amount int) (RateLi
 
 	bucket, ok := s.cache.Get(key)
 	if !ok {
-		// TODO: where to get those arguments? hardcoded doesn't look good
-		bucket = NewBucket(5.0, 0.5)
+		bucket = NewBucket(limit, rate)
 		s.cache.Put(key, bucket)
 	}
 

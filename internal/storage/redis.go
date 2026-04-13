@@ -75,17 +75,13 @@ return {
 }
 `
 
-func (s RedisStore) Take(ctx context.Context, key string, amount int) (RateLimitResult, error) {
+func (s RedisStore) Take(ctx context.Context, key string, amount int, limit float64, rate float64) (RateLimitResult, error) {
 	var res RateLimitResult
 
 	keys := []string{key}
-
-	// TODO: where to get those arguments? hardcoded doesn't look good
-	refillRate := 0.5
-	maxTokens := 5.0
 	now := float64(time.Now().UnixNano() / 1e9)
 
-	val, err := s.client.Eval(ctx, luaScript, keys, maxTokens, refillRate, now, amount).StringSlice()
+	val, err := s.client.Eval(ctx, luaScript, keys, limit, rate, now, amount).StringSlice()
 	if err != nil {
 		return res, err
 	}
@@ -95,7 +91,7 @@ func (s RedisStore) Take(ctx context.Context, key string, amount int) (RateLimit
 	resetTimeSecs, _ := strconv.ParseFloat(val[3], 64)
 
 	res.Allowed = val[0] == "1"
-	res.Limit = int(maxTokens)
+	res.Limit = int(limit)
 	res.Remaining = int(remaining)
 	res.RetryAfter = time.Duration(retryAfterSecs * float64(time.Second))
 	res.ResetTime = time.Unix(0, int64(resetTimeSecs*1e9))
