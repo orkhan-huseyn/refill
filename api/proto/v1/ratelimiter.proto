@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package ratelimiter.v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+
+option go_package = "github.com/orkhan-huseyn/refill/gen/go/v1;ratelimiterv1";
+
+message RateLimitRequest {
+    // namespace that rate limiting is being applied
+  string namespace = 1;
+    // key for rate limiting, e.g. api-key, user-id
+  string key = 2;
+    // cost of the request
+  int32 cost = 3;
+}
+
+message RateLimitResponse {
+  // whether the request was allowed
+  bool allowed = 1;
+  // the number of units remaining in the current window
+  int32 remaining = 2;
+  // exact time when the limit resets
+  google.protobuf.Timestamp reset_time = 3;
+  // if allowed is false, then when to retry
+  google.protobuf.Duration retry_after = 4;
+}
+
+// well, the rate limit service, lol
+service RateLimitService {
+  // checks if request is allowed with given parameters
+  rpc IsAllowed(RateLimitRequest) returns (RateLimitResponse) {}
+}
