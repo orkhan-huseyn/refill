@@ -14,9 +14,9 @@ type RateLimitServer struct {
 	limiter *limiter.Limiter
 }
 
-func NewRateLimitServer() *RateLimitServer {
+func NewRateLimitServer(storage, redisUrl string) *RateLimitServer {
 	return &RateLimitServer{
-		limiter: limiter.NewLimiter(),
+		limiter: limiter.NewLimiter(storage, redisUrl),
 	}
 }
 

@@ -10,9 +10,17 @@ type Limiter struct {
 	storage storage.RateLimitStore
 }
 
-func NewLimiter() *Limiter {
+func NewLimiter(storageType, redisUrl string) *Limiter {
+	// TODO: move it to factory method and handle errors (e.g. redisurl is not passed)
+	var storageToUse storage.RateLimitStore
+	switch storageType {
+	case "inmemory":
+		storageToUse = storage.NewInMemoryStore()
+	case "redis":
+		storageToUse = storage.NewRedisStore(redisUrl)
+	}
 	return &Limiter{
-		storage: storage.NewRedisStore("redis://default:my_password_here@localhost:6379/1"),
+		storage: storageToUse,
 	}
 }
 

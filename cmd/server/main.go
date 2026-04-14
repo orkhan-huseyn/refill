@@ -16,6 +16,8 @@ import (
 )
 
 var port = flag.Int("port", 50051, "The server port")
+var storage = flag.String("storage", "inmemory", "Storage to use, (redis|memcached|inmemory)")
+var redisUrl = flag.String("redis.url", "", "Redis url e.g. redis://user:pass@localhost:6379/<db>")
 
 func main() {
 	flag.Parse()
@@ -29,7 +31,7 @@ func main() {
 	}
 
 	server := grpc.NewServer()
-	serviceImpl := ratelimitsrv.NewRateLimitServer()
+	serviceImpl := ratelimitsrv.NewRateLimitServer(*storage, *redisUrl)
 	pb.RegisterRateLimitServiceServer(server, serviceImpl)
 
 	go func() {
