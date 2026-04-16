@@ -3,21 +3,24 @@ package limiter
 import (
 	"context"
 
+	"github.com/orkhan-huseyn/refill/config"
+	"github.com/orkhan-huseyn/refill/internal/enforcer"
 	"github.com/orkhan-huseyn/refill/internal/storage"
 )
 
 type Limiter struct {
-	storage storage.RateLimitStore
+	storage  storage.RateLimitStore
+	enforcer enforcer.RuleEnforcer
 }
 
-func NewLimiter(storageType, redisUrl string) *Limiter {
+func NewLimiter(cfg config.Config) *Limiter {
 	// TODO: move it to factory method and handle errors (e.g. redisurl is not passed)
 	var storageToUse storage.RateLimitStore
-	switch storageType {
-	case "inmemory":
+	switch cfg.RateLimit.Type {
+	case "local":
 		storageToUse = storage.NewInMemoryStore()
-	case "redis":
-		storageToUse = storage.NewRedisStore(redisUrl)
+	case "global":
+		storageToUse = storage.NewRedisStore(cfg.RateLimit.Redis)
 	}
 	return &Limiter{
 		storage: storageToUse,
@@ -25,10 +28,10 @@ func NewLimiter(storageType, redisUrl string) *Limiter {
 }
 
 // TODO: fetch limit and rate from rule storage
-var limit = 5.0
+var burst = 5.0
 var rate = 0.5
 
 func (l *Limiter) Allow(ctx context.Context, key, namespace string, cost int) (storage.RateLimitResult, error) {
 	compositeKey := key + ":" + namespace
-	return l.storage.Take(ctx, compositeKey, cost, limit, rate)
+	return l.storage.Take(ctx, compositeKey, cost, burst, rate)
 }

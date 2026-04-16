@@ -6,19 +6,21 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
+
+	"github.com/orkhan-huseyn/refill/config"
 )
 
 type RedisStore struct {
 	client *redis.Client
 }
 
-func NewRedisStore(url string) RedisStore {
-	opt, err := redis.ParseURL(url)
-	if err != nil {
-		panic(err)
-	}
-
-	client := redis.NewClient(opt)
+func NewRedisStore(redisCfg config.RedisConfig) RedisStore {
+	client := redis.NewClient(&redis.Options{
+		Addr:     redisCfg.Addr,
+		Password: redisCfg.Password,
+		DB:       redisCfg.DB,
+		Protocol: 2,
+	})
 	return RedisStore{
 		client: client,
 	}

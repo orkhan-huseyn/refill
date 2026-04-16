@@ -3,10 +3,12 @@ package server
 import (
 	"context"
 
-	pb "github.com/orkhan-huseyn/refill/gen/go/v1"
-	"github.com/orkhan-huseyn/refill/internal/limiter"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	"github.com/orkhan-huseyn/refill/config"
+	pb "github.com/orkhan-huseyn/refill/gen/go/v1"
+	"github.com/orkhan-huseyn/refill/internal/limiter"
 )
 
 type RateLimitServer struct {
@@ -14,9 +16,9 @@ type RateLimitServer struct {
 	limiter *limiter.Limiter
 }
 
-func NewRateLimitServer(storage, redisUrl string) *RateLimitServer {
+func NewRateLimitServer(cfg config.Config) *RateLimitServer {
 	return &RateLimitServer{
-		limiter: limiter.NewLimiter(storage, redisUrl),
+		limiter: limiter.NewLimiter(cfg),
 	}
 }
 

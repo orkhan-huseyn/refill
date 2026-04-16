@@ -1,0 +1,16 @@
+server:
+  addr: :50051
+
+ratelimit:
+  type: global
+  redis:
+    addr: localhost:6379
+    password: my_password_here
+    db: 1
+
+enforcer:
+  source: inline
+  rules:
+    - namespace: payments
+      burst: 5.0
+      rate: 0.5
