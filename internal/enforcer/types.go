@@ -1,11 +1,8 @@
 package enforcer
 
-type RuleEnforcer interface {
-	GetRule(namespace string) (RateLimitRule, error)
-}
+import "github.com/orkhan-huseyn/refill/internal/dto"
 
-type RateLimitRule struct {
-	Namespace string  `yaml:"namespace"`
-	Burst     float64 `yaml:"burst"`
-	Rate      float64 `yaml:"rate"`
+type RuleEnforcer interface {
+	PopulateCache() error
+	GetRule(namespace string) (dto.RateLimitRule, error)
 }

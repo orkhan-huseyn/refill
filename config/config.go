@@ -1,6 +1,6 @@
 package config
 
-import "github.com/orkhan-huseyn/refill/internal/enforcer"
+import "github.com/orkhan-huseyn/refill/internal/dto"
 
 type RateLimitType string
 
@@ -21,17 +21,17 @@ type RateLimitConfig struct {
 	Redis RedisConfig   `yaml:"redis,omitempty"`
 }
 
-type EnforcerSource string
+type EnforcerType string
 
 const (
-	SourceInline   EnforcerSource = "inline"
-	SourcePostgres EnforcerSource = "postgres"
+	TypeStatic   EnforcerType = "static"
+	TypePostgres EnforcerType = "postgres"
 )
 
 type EnforcerConfig struct {
-	Source EnforcerSource           `yaml:"source"`
-	Rules  []enforcer.RateLimitRule `yaml:"rules,omitempty"`
-	DBConn string                   `yaml:"dbconn,omitempty"` // TODO: make it PostgresConfig struct
+	Type   EnforcerType        `yaml:"type"`
+	Rules  []dto.RateLimitRule `yaml:"rules,omitempty"`
+	DBConn string              `yaml:"dbconn,omitempty"` // TODO: make it PostgresConfig struct
 }
 
 type ServerConfig struct {

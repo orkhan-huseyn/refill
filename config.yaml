@@ -9,8 +9,11 @@ ratelimit:
     db: 1
 
 enforcer:
-  source: inline
+  type: static
   rules:
     - namespace: payments
       burst: 5.0
       rate: 0.5
+    - namespace: dummy
+      burst: 100.0
+      rate: 1.0

@@ -1,15 +1,8 @@
 package dto
 
-import "time"
-
-type RateLimitResponse struct {
-	Allowed   bool      `json:"allowed"`
-	Remaining int       `json:"remaining"`
-	ResetTime time.Time `json:"reset_time"`
-}
-
-type RateLimitRequest struct {
-	Key       string `json:"key"`
-	Cost      int    `json:"cost"`
-	Namespace string `json:"namespace"`
+// TODO: should this be located here
+type RateLimitRule struct {
+	Namespace string  `yaml:"namespace"`
+	Burst     float64 `yaml:"burst"`
+	Rate      float64 `yaml:"rate"`
 }

@@ -8,7 +8,7 @@ Run with in memory storage: `go run ./...`
 Run with redis storage:
 ```bash
 $ docker compose up -d
-$ go run ./... -storage=redis -redis.url=redis://default:my_password_here@localhost:6379/1
+$ go run ./...
 ```
 
 ### Generate protobuf
