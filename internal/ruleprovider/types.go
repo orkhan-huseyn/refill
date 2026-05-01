@@ -1,8 +1,8 @@
-package enforcer
+package ruleprovider
 
 import "github.com/orkhan-huseyn/refill/internal/dto"
 
-type RuleEnforcer interface {
+type RuleProvider interface {
 	PopulateCache() error
 	GetRule(namespace string) (dto.RateLimitRule, error)
 }

@@ -1,4 +1,4 @@
-package storage
+package counter
 
 import (
 	"context"
@@ -7,28 +7,28 @@ import (
 	"github.com/orkhan-huseyn/refill/internal/shardedmap"
 )
 
-type InMemoryStore struct {
+type InMemoryCounter struct {
 	cache shardedmap.ShardedMap[*Bucket]
 }
 
-func NewInMemoryStore() InMemoryStore {
+func NewInMemoryCounter() InMemoryCounter {
 	// TODO: container aware?
 	shardCount := runtime.NumCPU()
-	return InMemoryStore{
+	return InMemoryCounter{
 		cache: shardedmap.New[*Bucket](shardCount),
 	}
 }
 
-func (s InMemoryStore) Take(ctx context.Context, key string, amount int, limit float64, rate float64) (RateLimitResult, error) {
+func (c InMemoryCounter) Take(ctx context.Context, key string, amount int, limit float64, rate float64) (RateLimitResult, error) {
 	var res RateLimitResult
 	if err := ctx.Err(); err != nil {
 		return res, err
 	}
 
-	bucket, ok := s.cache.Get(key)
+	bucket, ok := c.cache.Get(key)
 	if !ok {
 		bucket = NewBucket(limit, rate)
-		s.cache.Put(key, bucket)
+		c.cache.Put(key, bucket)
 	}
 
 	bucket.Refill()

@@ -1,11 +1,11 @@
-package storage
+package counter
 
 import (
 	"context"
 	"time"
 )
 
-type RateLimitStore interface {
+type RateLimitCounter interface {
 	Take(ctx context.Context, key string, amount int, limit float64, rate float64) (RateLimitResult, error)
 }
 

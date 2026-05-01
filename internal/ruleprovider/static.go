@@ -1,4 +1,4 @@
-package enforcer
+package ruleprovider
 
 import (
 	"fmt"
@@ -9,29 +9,29 @@ import (
 	"github.com/orkhan-huseyn/refill/internal/shardedmap"
 )
 
-type StaticRuleEnforcer struct {
+type StaticRuleProvider struct {
 	cache shardedmap.ShardedMap[*dto.RateLimitRule]
 	rules []dto.RateLimitRule
 }
 
-func NewStaticEnforcer(cfg config.Config) StaticRuleEnforcer {
+func NewStaticProvider(cfg config.Config) StaticRuleProvider {
 	// TODO: container aware?
 	shardCount := runtime.NumCPU()
 
-	return StaticRuleEnforcer{
+	return StaticRuleProvider{
 		cache: shardedmap.New[*dto.RateLimitRule](shardCount),
-		rules: cfg.Enforcer.Rules,
+		rules: cfg.RuleProvider.Rules,
 	}
 }
 
-func (e StaticRuleEnforcer) PopulateCache() error {
+func (e StaticRuleProvider) PopulateCache() error {
 	for _, rule := range e.rules {
 		e.cache.Put(rule.Namespace, &rule)
 	}
 	return nil
 }
 
-func (e StaticRuleEnforcer) GetRule(namespace string) (dto.RateLimitRule, error) {
+func (e StaticRuleProvider) GetRule(namespace string) (dto.RateLimitRule, error) {
 	rule, exists := e.cache.Get(namespace)
 	if !exists {
 		return dto.RateLimitRule{}, fmt.Errorf("no rule exists for namaspace '%s'", namespace)

@@ -4,46 +4,46 @@ import (
 	"context"
 
 	"github.com/orkhan-huseyn/refill/config"
-	"github.com/orkhan-huseyn/refill/internal/enforcer"
-	"github.com/orkhan-huseyn/refill/internal/storage"
+	"github.com/orkhan-huseyn/refill/internal/counter"
+	"github.com/orkhan-huseyn/refill/internal/ruleprovider"
 )
 
 type Limiter struct {
-	storage  storage.RateLimitStore
-	enforcer enforcer.RuleEnforcer
+	counter      counter.RateLimitCounter
+	ruleProvider ruleprovider.RuleProvider
 }
 
 func NewLimiter(cfg config.Config) *Limiter {
 	// TODO: move it to factory method and handle errors (e.g. redisurl is not passed)
-	var storageToUse storage.RateLimitStore
+	var counterInstance counter.RateLimitCounter
 	switch cfg.RateLimit.Type {
 	case config.RateLimitLocal:
-		storageToUse = storage.NewInMemoryStore()
+		counterInstance = counter.NewInMemoryCounter()
 	case config.RateLimitGlobal:
-		storageToUse = storage.NewRedisStore(cfg.RateLimit.Redis)
+		counterInstance = counter.NewRedisCounter(cfg.RateLimit.Redis)
 	}
 
 	// TODO: move it to factory method and handle errors
-	var enforcerToUse enforcer.RuleEnforcer
-	switch cfg.Enforcer.Type {
-	case config.TypeStatic:
-		enforcerToUse = enforcer.NewStaticEnforcer(cfg)
+	var ruleProviderInstance ruleprovider.RuleProvider
+	switch cfg.RuleProvider.Type {
+	case config.ProviderTypeStatic:
+		ruleProviderInstance = ruleprovider.NewStaticProvider(cfg)
 	}
 
 	// TODO: is this right place to do this? (also handle error)
-	go enforcerToUse.PopulateCache()
+	go ruleProviderInstance.PopulateCache()
 
 	return &Limiter{
-		storage:  storageToUse,
-		enforcer: enforcerToUse,
+		counterInstance,
+		ruleProviderInstance,
 	}
 }
 
-func (l *Limiter) Allow(ctx context.Context, key, namespace string, cost int) (storage.RateLimitResult, error) {
+func (l *Limiter) Allow(ctx context.Context, key, namespace string, cost int) (counter.RateLimitResult, error) {
 	compositeKey := key + ":" + namespace
-	rule, err := l.enforcer.GetRule(namespace)
+	rule, err := l.ruleProvider.GetRule(namespace)
 	if err != nil {
-		return storage.RateLimitResult{}, err
+		return counter.RateLimitResult{}, err
 	}
-	return l.storage.Take(ctx, compositeKey, cost, rule.Burst, rule.Rate)
+	return l.counter.Take(ctx, compositeKey, cost, rule.Burst, rule.Rate)
 }

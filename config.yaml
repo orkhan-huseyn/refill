@@ -8,7 +8,7 @@ ratelimit:
     password: my_password_here
     db: 1
 
-enforcer:
+ruleProvider:
   type: static
   rules:
     - namespace: payments

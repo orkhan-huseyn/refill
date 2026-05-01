@@ -21,15 +21,15 @@ type RateLimitConfig struct {
 	Redis RedisConfig   `yaml:"redis,omitempty"`
 }
 
-type EnforcerType string
+type RuleProviderType string
 
 const (
-	TypeStatic   EnforcerType = "static"
-	TypePostgres EnforcerType = "postgres"
+	ProviderTypeStatic   RuleProviderType = "static"
+	ProviderTypePostgres RuleProviderType = "postgres"
 )
 
-type EnforcerConfig struct {
-	Type   EnforcerType        `yaml:"type"`
+type RuleProviderConfig struct {
+	Type   RuleProviderType    `yaml:"type"`
 	Rules  []dto.RateLimitRule `yaml:"rules,omitempty"`
 	DBConn string              `yaml:"dbconn,omitempty"` // TODO: make it PostgresConfig struct
 }
@@ -39,7 +39,7 @@ type ServerConfig struct {
 }
 
 type Config struct {
-	Server    ServerConfig    `yaml:"server"`
-	RateLimit RateLimitConfig `yaml:"ratelimit"`
-	Enforcer  EnforcerConfig  `yaml:"enforcer"`
+	Server       ServerConfig       `yaml:"server"`
+	RateLimit    RateLimitConfig    `yaml:"ratelimit"`
+	RuleProvider RuleProviderConfig `yaml:"ruleProvider"`
 }
